@@ -1,0 +1,121 @@
+---
+title: "Tobacco Abuse in Europe"
+author: Gyan Gadjoe (2807574) Jason Purnama (2827689) Josie Chen (2801717) Mijke Gerritsen (2824547) Milica Stankovic (2847467) Veronika Vozarova (2847711) Noel Tripathi (2871659)
+date: '`r Sys.Date()`'
+output:
+  word_document: default
+  pdf_document: default
+---
+# Load required packages
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+if (!require("pacman")) install.packages("pacman")
+pacman::p_load(
+  tidyverse,    # Data manipulation and visualization
+  sf,           # Spatial data handling
+  rnaturalearth, # Map data
+  countrycode,  # Country code conversions
+  ggrepel,      # Better label placement
+  scales,       # Scale formatting
+  viridis,      # Color palettes
+  patchwork     # Combining plots
+)
+```
+
+# Part 1 - Identify a Social Problem
+## 1.1 Describe the Social Problem
+
+Why is this relevant?
+Tobacco use is still a big concern for society and public health in Europe, and it causes a lot of deaths that could have been avoided. From 2019 to 2022, smoking was always connected to higher death rates in all EU member states. More than 850,000 people died in the EU in 2019 because they were actively smoking, and another 73,000 died because they were exposed to secondhand smoke (European Commission, 2021). During this time, countries like Hungary, Bulgaria, and Latvia had death rates of more than 250 deaths per 100,000 inhabitants from illnesses caused by smoking (OECD, 2023).
+ 
+Additionally, smoking is bad for your health and costs healthcare systems money, makes people less productive, and makes health disparities worse. According to the OECD (2023), the number of people aged 15 and up who smoked every day in Europe stayed high from 2019 to 2022. It was less than 10% in some Nordic countries and more than 25% in Eastern Europe.
+ 
+The effects last a long time and are deadly: smokers lose an average of 10 to 14 years of life and are more likely to have lung cancer, heart disease, and respiratory diseases (WHO, 2023). Secondhand smoke exposure also continues to harm millions of non-smokers, notably children, the elderly, and families with poor incomes (CDC, 2025). This means that smoking is not just bad for your health, but it is also a long-term societal problem that needs help from other countries' policies, health education, and community assistance programs.
+
+# Part 2 - Data Sourcing
+## 2.1 Load in the data
+The analysis was made up of two datasets, specifically two data sets from the OECD Health statistics
+1. Tobacco consumtion data  OECDnew.csv: This reports the average cigarettes consumed per smoker per day for the OECD countries from the year 2019 up until the year 2022.
+2. Avoidable Mortalility data OECD.avoidable death.csv: This file includes country-level, avoidable, mortality rate rates (per 100,000 inhabitants) and this is from the year 2019 up until the year 2022.
+
+For both of these data sets were loaded using read_csv() and we cleaned to retain the needed variables, for example: country codes, years, mortality, rate, and tobacco consumption. And other missing values and non-applicable data or filtered out.
+
+## 2.2 Provide a short summary of the dataset(s)
+Data set 1: Avoidable mortality 
+
+Rows:this data said has about 500 rows of data including 30 countries across 4 years from the year 2019 up until 2022, which would be 120 expected rows  per variable.
+
+Key Variables :
+mortality_rate: Age standardized deaths per 100,000
+
+Year: 2019-2022
+
+
+Data set 2 :tobacco consumption.
+
+Rows: this data set includes about 300 rows of data, including 22 countries for 4 years from the year 2019 up until the year 2022, which is about 88 rows of data per variable.
+
+Key variables:
+Cigarettes_per_day: the average number of cigarettes consume daily by each smoker in the population.
+
+Years: 2019-2023
+
+obs_status: Only “A” (actual) values are kept.
+
+## 2.3 Describe the type of variables included
+Data set 1: avoidable mortality
+For this data set there are 4 different variablesnthat where applicabe: Country_code, Country, year and mortality_rate.
+
+Country_code: The unit is ISO3, which is a standardized country identifier, and the timeframe for this is 2019 to 2022 and the limitation that are present was non-OECD countries were excluded.
+
+Country: The unit used for this is just country name, which is just the official name of the country for example “ Netherlands”, and the timeframe for this is 2019 to 2022 and there were no real limitations.
+
+year: For this type of variable, it was an integer and the units used were just calendar years, to be exact January 1 to December 31 and the timeframe for this is 2019 to 2022. and there were certain limitations here for example. A few countries did not have data in the year 2022.
+
+mortality_rate: For this type of variable, the unit used was deaths per 100,000 inhabitants and this was numeric. The timeframe for this was 2019 to 2022, and there were no real limitations.
+
+Data set 2: tobacco consumption
+For this data set, 4 variables were used, which include includes country_ code, Year, 
+cigar_ per_ day  and obs_ status.
+
+Country_code: The unit for this ISO3, which is a sstandardized country identifier, and the time duration for 
+This is 2019 to 2022. A limitation that emerged is there are only 22/30 countries available.
+
+Year: For this variable, the units used where calendar years, so January 1 - December 31 and the time duration
+For this is 2019-2022. There were no limitations for this variable.
+
+Cigarettes_per_day: This is for the average daily consumption per smoker, and the time duration for this was
+From 2019 to 2022 and the one limitation is that the daily consumption per smoker is survey based, so this would
+exclude unreported tobacco.
+
+Obs_status: This is a metadata flag for data set tobacco consumption, and mostly gives the quality and 
+measurement type of each data point. Its filtered by “ obs_status == A” so the values are directly measured as opposed
+To “E” which is estimated. Time duration for this is 2019-2022.
+
+# Part 3 - Quantifying
+
+## 3.1 Data cleaning
+For both datasets (OECDnew.csv and OECD.avoidable death.csv), the following cleaning steps were performed:
+- Necessary column was selected: Country, Year, Value
+- Filtered for the relevant indicators: Tobacco consumption per smoker and avoidable mortality rate.
+- Removed any NA values to ensure clean, complete datasets.
+- Merged the two datasets using the Country and Year variables for analysis.
+
+## 3.2 Generate necessary variables
+To measure the combined risk level of tobacco use and preventable mortality, a Health Risk Index (HRI) was developed by:
+- Using z-scores to standardise the variables related to tobacco use and preventable mortality. The HRI is calculated by averaging these standardised scores. 
+- Based on the HRI's quartiles, countries were divided into four risk categories: Very High, High, Moderate, and Low Risk.
+
+## 3.3 Visualize temporal variation
+The average preventable mortality rates and tobacco use in every nation from 2019 to 2022 were displayed in a time series line plot. 
+**Why this matters:**
+This graphic shows how smoking behaviour and its possible health effects have changed over time. The plot helps in identifying any temporal pattern, such as the mortality peak in 2020–2021, which may be connected to the public health effects of the COVID-19 pandemic.
+
+## 3.4 Visualize spatial variation
+This identifies geographical differences in health risks related to smoking. For example, Eastern and Southern European countries tend to be in higher risk categories, highlighting regions needing stronger tobacco control and health interventions.
+
+## 3.5 Visualize sub-population variation
+Avoidable mortality rates in high-risk nations were separated into three groups: above median, below median, and middle. This showed that, compared to other countries, those above the median consistently had worse health outcomes and higher tobacco use.
+
+## 3.6 Event analysis
+![alt text] (average health risk.jpeg)
